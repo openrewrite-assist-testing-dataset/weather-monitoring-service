@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "weather-monitoring-service.fullname" . }}-config
+  labels:
+    {{- include "weather-monitoring-service.labels" . | nindent 4 }}
+data:
+  application.yml: |
+    server:
+      type: simple
+      applicationContextPath: /
+      adminContextPath: /admin
+      connector:
+        type: http
+        port: 8080
+        bindHost: 0.0.0.0
+      adminConnectors:
+        - type: http
+          port: 8081
+          bindHost: 0.0.0.0
+
+    database:
+      driverClass: org.postgresql.Driver
+      user: ${DATABASE_USER}
+      password: ${DATABASE_PASSWORD}
+      url: ${DATABASE_URL}
+      properties:
+        charSet: UTF-8
+        hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+      maxWaitForConnection: 1s
+      validationQuery: "SELECT 1"
+      validationQueryTimeout: 3s
+      minSize: 8
+      maxSize: 32
+      checkConnectionWhileIdle: false
+      evictionInterval: 10s
+      minIdleTime: 1 minute
+
+    logging:
+      level: INFO
+      loggers:
+        com.weather: DEBUG
+        org.jdbi: DEBUG
+      appenders:
+        - type: console
+          threshold: INFO
+          timeZone: UTC
+          target: stdout
+          logFormat: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+        - type: file
+          threshold: DEBUG
+          timeZone: UTC
+          currentLogFilename: ./logs/weather-api.log
+          archivedLogFilenamePattern: ./logs/weather-api-%d{yyyy-MM-dd}-%i.log.gz
+          archivedFileCount: 30
+          maxFileSize: 10MB
+          logFormat: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+    jwtSecret: ${JWT_SECRET}
+    apiKeys:
+      {{- range .Values.config.apiKeys }}
+      - {{ . | quote }}
+      {{- end }}
+    
+    weatherApiUrl: {{ .Values.config.weatherApiUrl | quote }}
+    dataRetentionDays: {{ .Values.config.dataRetentionDays }}
