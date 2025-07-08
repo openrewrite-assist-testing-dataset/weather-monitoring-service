@@ -1,0 +1,64 @@
+server:
+  type: simple
+  applicationContextPath: /
+  adminContextPath: /admin
+  connector:
+    type: http
+    port: 8080
+    bindHost: 0.0.0.0
+  adminConnectors:
+    - type: http
+      port: 8081
+      bindHost: 0.0.0.0
+
+database:
+  driverClass: org.postgresql.Driver
+  user: weather_user
+  password: weather_pass
+  url: jdbc:postgresql://localhost:5432/weather_db
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+  maxWaitForConnection: 1s
+  validationQuery: "SELECT 1"
+  validationQueryTimeout: 3s
+  minSize: 8
+  maxSize: 32
+  checkConnectionWhileIdle: false
+  evictionInterval: 10s
+  minIdleTime: 1 minute
+
+logging:
+  level: INFO
+  loggers:
+    com.weather: DEBUG
+    org.jdbi: DEBUG
+  appenders:
+    - type: console
+      threshold: INFO
+      timeZone: UTC
+      target: stdout
+      logFormat: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    - type: file
+      threshold: DEBUG
+      timeZone: UTC
+      currentLogFilename: ./logs/weather-api.log
+      archivedLogFilenamePattern: ./logs/weather-api-%d{yyyy-MM-dd}-%i.log.gz
+      archivedFileCount: 30
+      maxFileSize: 10MB
+      logFormat: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+metrics:
+  frequency: 1 minute
+  reporters:
+    - type: log
+      logger: metrics
+      markerName: metrics
+
+jwtSecret: "weather-secret-key-2021"
+apiKeys:
+  - "weather-api-key-001"
+  - "weather-api-key-002"
+  
+weatherApiUrl: "https://api.weather.com/v1"
+dataRetentionDays: 30
