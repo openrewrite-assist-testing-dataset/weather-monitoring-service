@@ -1,10 +1,10 @@
 # Multi-stage build with outdated base image
-FROM openjdk:11-jdk-slim as builder
+FROM eclipse-temurin:17-jdk-alpine as builder
 
 WORKDIR /app
 
 # Copy gradle files
-COPY build.gradle settings.gradle gradle.properties ./
+COPY build.gradle settings.gradle ./
 COPY gradle/ ./gradle/
 COPY gradlew ./
 
@@ -17,7 +17,7 @@ COPY data-collector/ ./data-collector/
 RUN ./gradlew clean build -x test
 
 # Runtime stage with outdated JRE
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
