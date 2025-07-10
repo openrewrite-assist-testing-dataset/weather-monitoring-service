@@ -1,10 +1,10 @@
 # Multi-stage build with outdated base image
-FROM openjdk:11-jdk-slim as builder
+FROM eclipse-temurin:17-jdk-alpine as builder
 
 WORKDIR /app
 
 # Copy gradle files
-COPY build.gradle settings.gradle gradle.properties ./
+COPY build.gradle settings.gradle ./
 COPY gradle/ ./gradle/
 COPY gradlew ./
 
@@ -17,12 +17,12 @@ COPY data-collector/ ./data-collector/
 RUN ./gradlew clean build -x test
 
 # Runtime stage with outdated JRE
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
 # Create non-root user
-RUN groupadd -r weather && useradd -r -g weather weather
+RUN addgroup -g 1000 weather && adduser -u 1000 -G weather -s /bin/sh -D weather
 
 # Copy the built JAR
 COPY --from=builder /app/weather-api/build/libs/weather-api-*.jar app.jar
