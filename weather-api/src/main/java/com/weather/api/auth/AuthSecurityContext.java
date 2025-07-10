@@ -5,11 +5,11 @@ import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
 
 public class AuthSecurityContext implements SecurityContext {
-    private final Object principal;
+    private final UserPrincipal principal;
     private final String scheme;
     private final ContainerRequestContext requestContext;
 
-    public AuthSecurityContext(Object principal, String scheme, ContainerRequestContext requestContext) {
+    public AuthSecurityContext(UserPrincipal principal, String scheme, ContainerRequestContext requestContext) {
         this.principal = principal;
         this.scheme = scheme;
         this.requestContext = requestContext;
@@ -17,12 +17,7 @@ public class AuthSecurityContext implements SecurityContext {
 
     @Override
     public Principal getUserPrincipal() {
-        return new Principal() {
-            @Override
-            public String getName() {
-                return principal.toString();
-            }
-        };
+        return principal;
     }
 
     @Override
