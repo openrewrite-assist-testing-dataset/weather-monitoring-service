@@ -22,7 +22,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Create non-root user
-RUN groupadd -r weather && useradd -r -g weather weather
+RUN addgroup -g 1000 weather && adduser -u 1000 -G weather -s /bin/sh -D weather
 
 # Copy the built JAR
 COPY --from=builder /app/weather-api/build/libs/weather-api-*.jar app.jar
