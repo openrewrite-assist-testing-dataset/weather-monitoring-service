@@ -1,5 +1,6 @@
 package com.weather.api.auth;
 
+import io.dropwizard.auth.basic.BasicCredentials;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,23 +25,24 @@ class ApiKeyAuthenticatorTest {
     @Test
     void authenticate_ReturnsUser_WhenApiKeyIsValid() {
         // Given
-        String validApiKey = "key1";
+        BasicCredentials validCredentials = new BasicCredentials("key1", "password");
 
         // When
-        Optional<User> result = apiKeyAuthenticator.authenticate(validApiKey);
+        Optional<User> result = apiKeyAuthenticator.authenticate(validCredentials);
 
         // Then
         assertTrue(result.isPresent());
-        assertEquals("api-user", result.get().getName());
+        assertEquals("key1", result.get().getName());
+        assertEquals("api-key", result.get().getType());
     }
 
     @Test
     void authenticate_ReturnsEmpty_WhenApiKeyIsInvalid() {
         // Given
-        String invalidApiKey = "invalid-key";
+        BasicCredentials invalidCredentials = new BasicCredentials("invalid-key", "password");
 
         // When
-        Optional<User> result = apiKeyAuthenticator.authenticate(invalidApiKey);
+        Optional<User> result = apiKeyAuthenticator.authenticate(invalidCredentials);
 
         // Then
         assertFalse(result.isPresent());
@@ -48,11 +50,11 @@ class ApiKeyAuthenticatorTest {
 
     @Test
     void authenticate_ReturnsEmpty_WhenApiKeyIsNull() {
-        // Given
-        String nullApiKey = null;
+        // Given - BasicCredentials doesn't allow null username, so we test with invalid key
+        BasicCredentials invalidCredentials = new BasicCredentials("null-key", "password");
 
         // When
-        Optional<User> result = apiKeyAuthenticator.authenticate(nullApiKey);
+        Optional<User> result = apiKeyAuthenticator.authenticate(invalidCredentials);
 
         // Then
         assertFalse(result.isPresent());
@@ -61,10 +63,10 @@ class ApiKeyAuthenticatorTest {
     @Test
     void authenticate_ReturnsEmpty_WhenApiKeyIsEmpty() {
         // Given
-        String emptyApiKey = "";
+        BasicCredentials emptyCredentials = new BasicCredentials("", "password");
 
         // When
-        Optional<User> result = apiKeyAuthenticator.authenticate(emptyApiKey);
+        Optional<User> result = apiKeyAuthenticator.authenticate(emptyCredentials);
 
         // Then
         assertFalse(result.isPresent());

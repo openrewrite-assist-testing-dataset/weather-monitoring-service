@@ -4,9 +4,11 @@ import java.security.Principal;
 
 public class User implements Principal {
     private final String name;
+    private final String type;
 
-    public User(String name) {
+    public User(String name, String type) {
         this.name = name;
+        this.type = type;
     }
 
     @Override
@@ -14,16 +16,15 @@ public class User implements Principal {
         return name;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof User)) return false;
-        User user = (User) o;
-        return name != null ? name.equals(user.name) : user.name == null;
+    public String getType() {
+        return type;
     }
 
     @Override
-    public int hashCode() {
-        return name != null ? name.hashCode() : 0;
+    public String toString() {
+        return "User{" +
+                "name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                '}';
     }
 }

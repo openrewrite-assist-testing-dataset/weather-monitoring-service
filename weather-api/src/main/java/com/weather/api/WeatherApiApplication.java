@@ -3,20 +3,16 @@ package com.weather.api;
 import com.weather.api.config.WeatherApiConfiguration;
 import com.weather.api.health.DatabaseHealthCheck;
 import com.weather.api.resources.WeatherResource;
-import com.weather.api.auth.JwtAuthFilter;
-import com.weather.api.auth.ApiKeyAuthFilter;
+import com.weather.api.auth.User;
 import com.weather.api.db.WeatherDAO;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
-import io.dropwizard.auth.chained.ChainedAuthFilter;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.jdbi.v3.core.Jdbi;
 
-import javax.ws.rs.container.ContainerRequestFilter;
-import java.util.List;
 
 public class WeatherApiApplication extends Application<WeatherApiConfiguration> {
     
@@ -38,31 +34,21 @@ public class WeatherApiApplication extends Application<WeatherApiConfiguration> 
     public void run(WeatherApiConfiguration configuration, Environment environment) {
         final JdbiFactory factory = new JdbiFactory();
         final Jdbi jdbi = factory.build(environment, configuration.getDataSourceFactory(), "postgresql");
-        
+
         final WeatherDAO weatherDAO = jdbi.onDemand(WeatherDAO.class);
-        
-        // Deprecated auth chaining pattern
-        final JwtAuthFilter jwtFilter = JwtAuthFilter.createFilter(
-            new com.weather.api.auth.JwtAuthenticator(configuration.getJwtSecret()),
-            "Bearer",
-            "realm"
-        );
 
-        final ApiKeyAuthFilter apiKeyFilter = ApiKeyAuthFilter.createFilter(
-            new com.weather.api.auth.ApiKeyAuthenticator(configuration.getApiKeys()),
-            "ApiKey",
-            "realm"
-        );
+        // Configure authentication using standard Dropwizard approach
+        environment.jersey().register(new AuthDynamicFeature(
+            new io.dropwizard.auth.basic.BasicCredentialAuthFilter.Builder<User>()
+                .setAuthenticator(new com.weather.api.auth.ApiKeyAuthenticator(configuration.getApiKeys()))
+                .setRealm("weather-api")
+                .buildAuthFilter()));
 
-        final ChainedAuthFilter<String, com.weather.api.auth.User> chainedAuthFilter = new ChainedAuthFilter<>(
-            List.of(jwtFilter, apiKeyFilter));
+        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
 
-        environment.jersey().register(new AuthDynamicFeature(chainedAuthFilter));
-        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(com.weather.api.auth.User.class));
-        
         // Register resources
         environment.jersey().register(new WeatherResource(weatherDAO));
-        
+
         // Register health checks
         environment.healthChecks().register("database", new DatabaseHealthCheck(jdbi));
     }
